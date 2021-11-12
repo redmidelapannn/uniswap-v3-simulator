@@ -29,7 +29,6 @@ async function main() {
       blockTag: blockNum,
     });
     let sqrtPrice = tickToSqrtPrice(tick);
-    let basePosition = await hypervisor.getBasePosition();
     let baseLower = await hypervisor.baseLower({
       blockTag: blockNum,
     });
@@ -64,13 +63,15 @@ async function main() {
   }
 
   function sqrtPriceToView(sqrtPriceX96: BigNumber): BigNumber {
-    return BigNumber.from(10)
-      .pow(12)
-      .div(
-        BigNumber.from(sqrtPriceX96)
-          .pow(2)
-          .shr(96 * 2)
-      );
+    return sqrtPriceX96.eq(0)
+      ? BigNumber.from(0)
+      : BigNumber.from(10)
+          .pow(12)
+          .div(
+            BigNumber.from(sqrtPriceX96)
+              .pow(2)
+              .shr(96 * 2)
+          );
   }
 
   async function computeUnitPrice(
