@@ -16,24 +16,51 @@ async function main() {
   )) as Hypervisor;
   let topic = hypervisor.filters.Rebalance();
   let events = await hypervisor.queryFilter(topic, fromBlock, toBlock);
+  // table head
+  console.log(
+    `blockNum,timestamp,date,totalAmount0,totalAmount1,feeAmount0,feeAmount1,unitPrice,currPrice,baseLower,baseUpper,limitLower,limitUpper`
+  );
   for (let event of events) {
     let block = await ethers.provider.getBlock(event.blockNumber);
     let date = new Date(block.timestamp * 1000);
 
+    let blockNum = block.number;
     let tick = await hypervisor.currentTick({
-      blockTag: block.number,
+      blockTag: blockNum,
     });
-    let sqrtPrice = BigNumber.from(
-      TickMath.getSqrtRatioAtTick(tick).toString()
-    );
+    let sqrtPrice = tickToSqrtPrice(tick);
+    let basePosition = await hypervisor.getBasePosition();
+    let baseLower = await hypervisor.baseLower({
+      blockTag: blockNum,
+    });
+    let baseUpper = await hypervisor.baseUpper({
+      blockTag: blockNum,
+    });
+    let limitLower = await hypervisor.limitLower({
+      blockTag: blockNum,
+    });
+    let limitUpper = await hypervisor.limitUpper({
+      blockTag: blockNum,
+    });
     console.log(
-      `${block.number}\t${block.timestamp}\t${DateConverter.formatDate(
+      `${block.number},${block.timestamp},${DateConverter.formatDate(
         date,
         DATE_FORMAT
-      )}\t${await computeUnitPrice(block.number, sqrtPrice)}\t${sqrtPriceToView(
+      )},${event.args.totalAmount0},${event.args.totalAmount1},${
+        event.args.feeAmount0
+      },${event.args.feeAmount1},${await computeUnitPrice(
+        block.number,
         sqrtPrice
-      )}`
+      )},${sqrtPriceToView(sqrtPrice)},${sqrtPriceToView(
+        tickToSqrtPrice(baseUpper)
+      )},${sqrtPriceToView(tickToSqrtPrice(baseLower))},${sqrtPriceToView(
+        tickToSqrtPrice(limitUpper)
+      )},${sqrtPriceToView(tickToSqrtPrice(limitLower))}`
     );
+  }
+
+  function tickToSqrtPrice(tick: number): BigNumber {
+    return BigNumber.from(TickMath.getSqrtRatioAtTick(tick).toString());
   }
 
   function sqrtPriceToView(sqrtPriceX96: BigNumber): BigNumber {
