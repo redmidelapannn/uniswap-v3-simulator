@@ -5,7 +5,7 @@ import { TickMath } from "../src/util/TickMath";
 import { BigNumber } from "ethers";
 
 let poolAddress = "0x716bd8A7f8A44B010969A1825ae5658e7a18630D";
-let fromBlock = 12619747;
+let fromBlock = 12732336; //12619747;
 let toBlock = 13595744;
 const DATE_FORMAT: string = "YYYY-MM-DD HH:mm:ss";
 
@@ -32,15 +32,19 @@ async function main() {
     let baseLower = await hypervisor.baseLower({
       blockTag: blockNum,
     });
+    console.log(baseLower.toString());
     let baseUpper = await hypervisor.baseUpper({
       blockTag: blockNum,
     });
+    console.log(baseUpper.toString());
     let limitLower = await hypervisor.limitLower({
       blockTag: blockNum,
     });
+    console.log(limitLower.toString());
     let limitUpper = await hypervisor.limitUpper({
       blockTag: blockNum,
     });
+    console.log(limitUpper.toString());
     console.log(
       `${block.number},${block.timestamp},${DateConverter.formatDate(
         date,
@@ -50,11 +54,19 @@ async function main() {
       },${event.args.feeAmount1},${await computeUnitPrice(
         block.number,
         sqrtPrice
-      )},${sqrtPriceToView(sqrtPrice)},${sqrtPriceToView(
-        tickToSqrtPrice(baseUpper)
-      )},${sqrtPriceToView(tickToSqrtPrice(baseLower))},${sqrtPriceToView(
-        tickToSqrtPrice(limitUpper)
-      )},${sqrtPriceToView(tickToSqrtPrice(limitLower))}`
+      )},${sqrtPriceToView(sqrtPrice)},${
+        baseUpper < 0 ? baseLower : sqrtPriceToView(tickToSqrtPrice(baseUpper))
+      },${
+        baseUpper < 0 ? baseUpper : sqrtPriceToView(tickToSqrtPrice(baseLower))
+      },${
+        limitUpper < 0
+          ? limitLower
+          : sqrtPriceToView(tickToSqrtPrice(limitUpper))
+      },${
+        limitUpper < 0
+          ? limitUpper
+          : sqrtPriceToView(tickToSqrtPrice(limitLower))
+      }`
     );
   }
 
